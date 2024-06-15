@@ -24,7 +24,7 @@ module.exports = {
         where: { 
           user_id: userId 
         },
-          include: [Room]
+          include: [Room, Tool]
        });
       res.json(result);
     } catch (error) {
@@ -79,7 +79,9 @@ module.exports = {
             }
             Booked.booking_status = booking_status;
             await Booked.save();
-            res.status(200).json(Booked);
+            res.status(200).json({
+              status: 200,
+              data:Booked});
 
     } catch (error) {
       res.status(500).json({ message: "Internal server Error" });
@@ -131,7 +133,7 @@ module.exports = {
 
     createBookingTool: async (req, res) => {
         try {
-            const usersId = req.userData.userId;
+            const usersId = req.userData.id;
             const { 
                 tool_id,
                 peminjam,
@@ -196,6 +198,25 @@ module.exports = {
       const result = await Booking.findAll({
           where: {
               room_id: room_id,
+          }
+      });
+      res.status(200).json({
+        message: "Get All Data",
+        data: result,
+    });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+  },
+
+  getBookingByToolId: async (req, res) => {
+    try {
+      const { tool_id } = req.params;
+      
+      const result = await Booking.findAll({
+          where: {
+              tool_id: tool_id,
           }
       });
       res.status(200).json({

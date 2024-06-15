@@ -9,9 +9,10 @@ router.get("/",  bookingController.findAllBooking);
 router.get("/my_booking", authenticate, authorize(["user"], "user"), bookingController.findAllBookingByUserId);
 router.post("/room", authenticate, authorize(["user"], "user"), bookingController.createBookingRoom);
 router.post("/tool", authenticate, authorize(["user"], "user"),  bookingController.createBookingTool);
-router.get("/:id",  authenticate, authorize(["user","admin","admin_staff"], "user"), bookingController.showBookingById);
-router.patch("/:id", authenticate, authorize(["admin","admin_staff"], "admin"), bookingController.editBooking);
-router.delete("/delete/:id", authenticate, authorize(["user","admin","admin_staff"], "user"), bookingController.deleteBooking);
-router.get("/room/:room_id",  bookingController.getBookingByRoomId);
+router.get("/:id",  bookingController.showBookingById);
+router.patch("/:id", authenticate, authorize(["admin","admin_staff","super_admin"], "admin"), bookingController.editBooking);
+router.delete("/delete/:id",  bookingController.deleteBooking);
+router.get("/room/:room_id", bookingController.getBookingByRoomId);
+router.get("/tool/:tool_id", bookingController.getBookingByToolId);
 
 module.exports = router;

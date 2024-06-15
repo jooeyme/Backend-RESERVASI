@@ -5,7 +5,7 @@ module.exports = {
     getAdmin: async(req, res) => {
         try {
             const result = await Admin.findAll({
-                attributes:['id','username_admn','email_admn', 'role']
+                attributes:['id','username_admn','email_admn', 'role', 'password']
             });
             res.status(200).json({
                 message: "Get All Data",

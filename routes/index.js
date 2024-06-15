@@ -7,6 +7,8 @@ const pegawaiRoutes = require("./pegawaiRoutes");
 const userRoutes = require("./userRoutes");
 const adminRoutes = require("./adminRoutes");
 const authRoutes = require("./authRoutes");
+const fileRoutes = require("./fileRoutes");
+const sendmail = require("./sendmail");
 
 router.get('/health-check', (req, res) => {
     res.status(200).json({
@@ -22,7 +24,8 @@ router.use("/pegawai", pegawaiRoutes);
 router.use("/user", userRoutes);
 router.use("/admin", adminRoutes);
 router.use("/auth", authRoutes);
-
+router.use("/file", fileRoutes);
+router.use("/send", sendmail);
 
 
 

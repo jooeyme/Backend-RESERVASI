@@ -64,7 +64,7 @@ Login : async (req, res) =>{
                 role: 'user',
                 type: 'user',
             };
-            const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30m' }); // Set expiry time
+            const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '60m' }); // Set expiry time
             
         res.status(200).json({token, role: 'user', id:user.id});
     } catch (error) {
@@ -122,7 +122,7 @@ LoginAdmin : async (req, res) =>{
             role: admin.role,
             type: 'admin',
           };
-        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30m' }); // Set expiry time
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '60m' }); // Set expiry time
     
         res.status(200).json({ token, role: admin.role });
     } catch (error) {
