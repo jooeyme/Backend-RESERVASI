@@ -1,11 +1,25 @@
 const express = require('express');
-const { uploadFile, getFiles, getFilesByUserId } = require('../middleware/uploadFile');
+const { uploadFileKolo, deleteFile } = require('../controllers/uploadFile');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
 const {authenticate, authorize} = require("../middleware/authRole")
 
 
-router.post('/upload', authenticate, uploadFile);
-router.get('/all', getFiles);
-router.get('/', authenticate, getFilesByUserId);	
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join('public/uploads/'));
+    },
+    filename: (req, file, cb) => {
+        const fileName = file.originalname;
+        cb(null, fileName);
+    }
+});
+
+const upload = multer({ storage: storage });
+
+
+router.post('/upload', upload.single('pdf'), uploadFileKolo);
+router.delete('/:id', deleteFile)
 
 module.exports = router;

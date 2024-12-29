@@ -13,7 +13,7 @@ module.exports = {
         type: Sequelize.STRING
       },
       NIP: {
-        type: Sequelize.STRING
+        type: Sequelize.INTEGER
       },
       KPE: {
         type: Sequelize.STRING

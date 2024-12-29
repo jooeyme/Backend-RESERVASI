@@ -37,9 +37,11 @@ module.exports = (sequelize, DataTypes) => {
     booking_date: DataTypes.DATE,
     start_time: DataTypes.TIME,
     end_time: DataTypes.TIME,
-    booking_status: DataTypes.ENUM('pending', 'approved', 'rejected'),
+    booking_status: DataTypes.ENUM('pending', 'approved', 'rejected', 'returned'),
     desk_activity: DataTypes.STRING,
-    dept: DataTypes.STRING
+    dept: DataTypes.STRING,
+    quantity: DataTypes.INTEGER,
+    note: DataTypes.TEXT
   }, {
     sequelize,
     modelName: 'Booking',

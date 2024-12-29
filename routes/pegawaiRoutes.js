@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const pegawaiController = require("../controllers/pegawaiController")
+const pegawaiController = require("../controllers/HumanResource/pegawaiController")
 
 router.get('/all', pegawaiController.findAllPegawai),
 router.get(`/:id`, pegawaiController.findPegawaibyId),

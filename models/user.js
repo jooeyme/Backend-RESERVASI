@@ -15,9 +15,6 @@ module.exports = (sequelize, DataTypes) => {
         { foreignKey: 'user_id' }
         );
       
-      this.hasMany(models.SuratReservasi, 
-        { foreignKey: 'user_id' }
-        );
     }
   }
   User.init({

@@ -16,7 +16,7 @@ module.exports = {
       {
         user_id: 2,
         room_id: 'M01',
-        alat_id: null,
+        tool_id: null,
         peminjam: 'jepriadi',
         kontak: '+62082234949709',
         booking_date: '2024-04-12',
@@ -29,7 +29,7 @@ module.exports = {
       {
         user_id: 2,
         room_id: null,
-        alat_id: 'H03',
+        tool_id: 'H03',
         peminjam: 'jepriadi',
         kontak: '+62082234949709',
         booking_date: '2024-04-12',
@@ -45,6 +45,7 @@ module.exports = {
   async down (queryInterface, Sequelize) {
     /**
      * Add commands to revert seed here.
+     * 
      *
      * Example:
      * await queryInterface.bulkDelete('People', null, {});

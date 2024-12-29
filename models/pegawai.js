@@ -11,11 +11,14 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      this.belongsTo(models.Document, 
+        { foreignKey: 'NIP', targetKey: 'employee_id' }
+        );
     }
   }
   Pegawai.init({
     name: DataTypes.STRING,
-    NIP: DataTypes.STRING,
+    NIP: DataTypes.INTEGER,
     KPE: DataTypes.STRING,
     NIDN: DataTypes.STRING,
     agama: DataTypes.STRING,

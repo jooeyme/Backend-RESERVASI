@@ -35,7 +35,7 @@ module.exports = {
       },
       booking_status: {
         type: Sequelize.ENUM,
-        values: ['pending', 'approved', 'rejected'],
+        values: ['pending', 'approved', 'rejected', 'returned'],
         defaultValue: 'pending'
       },
       createdAt: {

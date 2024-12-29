@@ -8,15 +8,18 @@ const cors = require("cors");
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
 const routes = require("./routes/index");
+const fs = require('fs');
+const { PDFDocument } = require('pdf-lib');
+const db = require('./models/index.js');
 
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(cors());
 //app.use(fileUpload());
-app.use('/public/uploads', express.static('public/uploads'));
+//app.use('/public/uploads', express.static('public/uploads'));
 
 app.use(express.static('public'));
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 
@@ -26,6 +29,35 @@ app.use(bodyParser.json());
 
 app.use("/api", routes);
 
-  app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}/api`);
-  });
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}/api`);
+});
+
+  async function listFormFields(pdfPath) {
+    try {
+        const pdfBuffer = fs.readFileSync(pdfPath);
+        const pdfDoc = await PDFDocument.load(pdfBuffer);
+        const form = pdfDoc.getForm();
+
+        const fields = form.getFields();
+        fields.forEach(field => {
+            const type = field.constructor.name;
+            const name = field.getName();
+            console.log(`${type}: ${name}`);
+        });
+    } catch (error) {
+        console.error('Error listing form fields:', error);
+    }
+}
+// Test Database Connection
+db.sequelize
+    .authenticate()
+    .then(() => {
+        console.log('Database connected successfully.');
+    })
+    .catch((err) => {
+        console.error('Unable to connect to the database:', err);
+    });
+
+const pdfPath = path.join(__dirname, './public/templates/pengajuan/form blanko kolokium.pdf');
+//listFormFields(pdfPath);
