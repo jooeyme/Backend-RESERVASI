@@ -18,6 +18,24 @@ module.exports = {
       res.status(500).json({ message: "Internal server error" });
     }
   },
+  findAllRoomsId: async (req, res) => {
+    try {      
+      const availableRoooms = await Room.findAll({
+        attributes:['room_id', 'name_room']
+      });
+
+      if (availableRoooms.length === 0) {
+        
+        return res.status(404).json({ message: "Tidak ada ruangan yang dapat digunakan."});
+      }
+  
+      res.status(200).json({ rooms: availableRoooms});
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Internal Server Error", error: error.message  });
+    }
+  },
+
   showRoomById: async (req, res) => {
     try {
       const { id } = req.params;
@@ -52,7 +70,10 @@ module.exports = {
         kapasitas, 
         luas, 
         deskripsi_room, 
-        fasilitas } = req.body;
+        fasilitas,
+        require_double_verification,
+        type,
+      } = req.body;
       //const gambar_room = req.file.filename;
 
       const result = await Room.findOne({
@@ -97,6 +118,8 @@ module.exports = {
             luas: luas,  
             deskripsi_room: deskripsi_room, 
             fasilitas: fasilitas, 
+            require_double_verification: require_double_verification,
+            type: type,
             gambar_room: newGambarRoom, 
         },
         {
@@ -124,7 +147,10 @@ module.exports = {
             kapasitas, 
             luas, 
             deskripsi_room, 
-            fasilitas } = req.body;
+            fasilitas,
+            require_double_verification,
+            type,
+          } = req.body;
         
         const gambar_room = req.file.filename;
          
@@ -138,6 +164,8 @@ module.exports = {
         luas: luas,  
         deskripsi_room: deskripsi_room, 
         fasilitas: fasilitas, 
+        require_double_verification: require_double_verification,
+        type: type,
         gambar_room: gambar_room, 
       });
 

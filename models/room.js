@@ -24,7 +24,9 @@ module.exports = (sequelize, DataTypes) => {
     luas: DataTypes.STRING,
     deskripsi_room: DataTypes.TEXT,
     fasilitas: DataTypes.TEXT,
-    gambar_room: DataTypes.STRING
+    gambar_room: DataTypes.STRING,
+    require_double_verification: DataTypes.BOOLEAN,
+    type: DataTypes.ENUM('lab', 'class', 'meeting'),
   }, {
     sequelize,
     modelName: 'Room',

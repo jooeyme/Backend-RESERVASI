@@ -35,8 +35,32 @@ module.exports = {
       },
       booking_status: {
         type: Sequelize.ENUM,
-        values: ['pending', 'approved', 'rejected', 'returned'],
+        values: ['pending', 'approved', 'rejected', 'returned', 'moved'],
         defaultValue: 'pending'
+      },
+      verified_admin_lab: {
+        allowNull: true,
+        type: Sequelize.BOOLEAN,
+      },
+      verified_admin_room: {
+        allowNull: true,
+        type: Sequelize.BOOLEAN,
+      },
+      verified_admin_leader: {
+        allowNull: true,
+        type: Sequelize.BOOLEAN,
+      },
+      verified_admin_tu: {
+        allowNull: true,
+        type: Sequelize.BOOLEAN,
+      },
+      jenis_pengguna: {
+        allowNull: true,
+        type: Sequelize.STRING,
+      },
+      jenis_kegiatan: {
+        allowNull: true,
+        type: Sequelize.STRING,
       },
       createdAt: {
         allowNull: false,

@@ -23,7 +23,9 @@ module.exports = (sequelize, DataTypes) => {
     kondisi: DataTypes.STRING,
     jumlah: DataTypes.INTEGER,
     deskripsi: DataTypes.TEXT,
-    gambar_tool: DataTypes.STRING
+    gambar_tool: DataTypes.STRING,
+    require_double_verification: DataTypes.BOOLEAN,
+    type: DataTypes.ENUM('lab', 'multimedia'),
   }, {
     sequelize,
     modelName: 'Tool',

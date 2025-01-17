@@ -11,6 +11,10 @@ module.exports = {
       type: Sequelize.STRING,
       allowNull: true,
     });
+    await queryInterface.addColumn('Users', 'alamat',{ 
+      type: Sequelize.STRING,
+      allowNull: true,
+    });
     await queryInterface.addColumn('Bookings', 'desk_activity',{ 
       type: Sequelize.STRING,
       allowNull: true,
