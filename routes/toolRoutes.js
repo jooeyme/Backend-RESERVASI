@@ -6,6 +6,7 @@ const authRole = require("../middleware/authRole");
 
 
 router.get("/", toolController.findAllTool);
+router.get("/toolId", toolController.findAllToolsId)
 router.post("/", uploadImage.single('gambar_tool'), toolController.createTool);
 router.get("/:id", toolController.showToolById);
 router.patch("/edit/:id", uploadImage.single('gambar_tool'), toolController.editTool);

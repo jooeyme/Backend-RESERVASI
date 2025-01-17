@@ -13,7 +13,8 @@ module.exports = {
             password,
             confirmPassword,
             NIM,
-            dept
+            dept,
+            alamat
         } = req.body;
 
         if(password !== confirmPassword) {
@@ -29,7 +30,8 @@ module.exports = {
                 email: email,
                 password: hashPassword,
                 NIM: NIM,
-                dept: dept
+                dept: dept,
+                alamat: alamat
             });
             res.status(201).json({msg: "Register Berhasil"});
 

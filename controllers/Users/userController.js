@@ -5,7 +5,7 @@ module.exports = {
     getUser: async(req, res) => {
         try {
             const result = await User.findAll({
-                attributes:['id','username','email','password']
+                attributes:['id','username','email','password', 'NIM', 'alamat']
             });
             res.status(200).json({
                 message: "Get All Data",

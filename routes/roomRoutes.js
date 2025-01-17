@@ -6,6 +6,7 @@ const authRole = require("../middleware/authRole")
 
 
 router.get("/",  roomController.findAllRoom);
+router.get("/roomId", roomController.findAllRoomsId)
 router.post("/",  uploadImage.single('gambar_room'), roomController.createRoom);
 router.get("/:id",  roomController.showRoomById);
 router.patch("/edit/:id", uploadImage.single('gambar_room'), roomController.editRoom);

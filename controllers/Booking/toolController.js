@@ -19,6 +19,24 @@ module.exports = {
     }
   },
 
+  findAllToolsId: async (req, res) => {
+    try {      
+      const availableRoooms = await Tool.findAll({
+        attributes:['tool_id', 'name_tool']
+      });
+
+      if (availableRoooms.length === 0) {
+        
+        return res.status(404).json({ message: "Tidak ada ruangan yang dapat digunakan."});
+      }
+  
+      res.status(200).json({ tools: availableRoooms});
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Internal Server Error", error: error.message  });
+    }
+  },
+
   showToolById: async (req, res) => {
     try {
       const { id } = req.params;
@@ -53,6 +71,8 @@ module.exports = {
             kondisi,
             jumlah,
             deskripsi,
+            require_double_verification,
+            type,
           } = req.body;
 
       const result = await Tool.findOne({
@@ -95,6 +115,8 @@ module.exports = {
             jumlah: jumlah,
             deskripsi: deskripsi,
             gambar_tool: newGambarTool, 
+            require_double_verification: require_double_verification,
+            type: type,
         },
         {
           where: {
@@ -120,7 +142,10 @@ module.exports = {
             alamat_tool,
             kondisi,
             jumlah,
-            deskripsi } = req.body;
+            deskripsi,
+            require_double_verification,
+            type, 
+          } = req.body;
         
         const gambar_tool = req.file.filename; 
 
@@ -133,6 +158,8 @@ module.exports = {
         jumlah: jumlah,
         deskripsi: deskripsi,
         gambar_tool: gambar_tool, 
+        require_double_verification: require_double_verification,
+        type: type,
       });
 
       res.status(201).json({
@@ -154,17 +181,19 @@ module.exports = {
       const tool = await Tool.findOne({
         where: { id: id },
       });
+      console.log("apakah ada tool?:",tool)
 
       if (tool) {
-        const path = path.join('public/images/', tool.gambar_tool);
+        const imagePath = path.join('public/images/', tool.gambar_tool);
         try {
-          await fs.promises.unlink(path);
+          if(fs.existsSync(imagePath)) {
+          await fs.promises.unlink(imagePath);
           await Tool.destroy({
             where: { id: id },
           });
           res.status(200).json({
             message: `Tool with id ${id} was successfully deleted`
-          });
+          })};
         } catch (error) {
           console.error("Error deleting image",error.message);
           return res.status(500).json({
@@ -180,8 +209,8 @@ module.exports = {
 
     } catch (err) {
       res.status(500).json({
-        message: "Internal server error",
-        error: err,
+        message: "Internal server error kah",
+        error: err.message,
       });
     }
   },

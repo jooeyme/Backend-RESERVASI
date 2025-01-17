@@ -2,21 +2,24 @@ const { Sequelize } = require("sequelize");
 const config = require("./config.json")[env];
 require("dotenv").config();
 
-const env = process.NODE_ENV || "development"; // Ganti sesuai dengan environment yang ingin Anda uji
+const env = process.env.NODE_ENV || "development";
 
- const { username, password, database, host, dialect } = config[env];
 
- if (env === "production") {
-   username = process.env.DB_USERNAME || username;
-   password = process.env.DB_PASSWORD || password;
-   database = process.env.DB_DATABASE || database;
-   host = process.env.DB_HOST || host;
- }
+let sequelize;
 
- const sequelize = new Sequelize(database, username, password, {
+ if (config.use_env_variable) {
+  console.log("Using environment variable")
+  sequelize = new Sequelize(process.env[config.use_env_variable],{
+    dialect: config.dialect,
+    dialectOptions: config.dialectOptions || {},
+  });
+ } else{
+  const { username, password, database, host, dialect } = config[env];
+  sequelize = new Sequelize(database, username, password, {
    host: host,
    dialect: dialect,
-});
+ 
+})};
 // let sequelize;
 // if (config.use_env_variable){
 //   sequelize = new Sequelize(process.env[config.use_env_variable], {
