@@ -14,9 +14,10 @@ const db = require('./models/index.js');
 
 app.use(express.json());
 app.use(morgan("dev"));
-app.use(cors());
-//app.use(fileUpload());
-//app.use('/public/uploads', express.static('public/uploads'));
+app.use(cors({
+    origin: process.env.FRONTEND_URL
+}));
+
 
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }));
