@@ -1199,7 +1199,7 @@ module.exports = {
 
       const pengguna = await User.findOne({
         where: {
-          user_id: userId,
+          id: userId,
         },
         attributes: [ 'email' ]
       })
@@ -1538,6 +1538,13 @@ module.exports = {
         jenis_kegiatan 
       } = req.body; // Ambil data dari body permintaan
       const statusBooking = 'pending';
+
+      const pengguna = await User.findOne({
+        where: {
+          id: usersId,
+        },
+        attributes: [ 'email' ]
+      })
       
       const createdBookings = [];
       for (const session of bookings){
@@ -1621,8 +1628,8 @@ module.exports = {
 
             // Kirim notifikasi email setelah booking berhasil dibuat
             const userMailOptions = {
-             from: 'mtejo25@gmail.com', // Ganti dengan email Anda
-             to: 'tejom697@gmail.com', // Email peminjam yang dikirim melalui req.body
+             from: email, // Ganti dengan email Anda
+             to: pengguna, // Email peminjam yang dikirim melalui req.body
             subject: 'Booking Alat Berhasil',
              text: `
               Halo ${peminjam},
@@ -1630,6 +1637,7 @@ module.exports = {
                Booking Anda telah berhasil dibuat dengan rincian sebagai berikut:
 
                - Alat: ${tool_id}
+               - Jumlah alat yang dipinjam ${bookings.quantity}
                - Tanggal: ${moment(bookings.booking_date).format('DD MMM YYYY')}
                - Waktu Mulai: ${bookings.start_time}
                - Waktu Selesai: ${bookings.end_time}
@@ -1645,7 +1653,7 @@ module.exports = {
 
             // Kirim email untuk admin
             const adminMailOptions = {
-              from: 'mtejo25@gmail.com', // Ganti dengan email Anda
+              from: email, // Ganti dengan email Anda
               to: 'spenseev9@gmail.com', // Ganti dengan email admin
               subject: 'Notifikasi Booking Baru',
               text: `
@@ -1740,7 +1748,7 @@ module.exports = {
       res.status(200).json({ rooms: availableRoooms});
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message  });
+      res.status(500).json({ message: "Internal Server Error", error: error.message  })
     }
   },
 
