@@ -3,12 +3,6 @@ const fs = require('fs');
 
 exports.uploadFileKolo = async (req, res) => {
 
-    const pdfFile = req.file;
-
-     // Logging to debug the issue
-     console.log('Files received:', req.file);
-     console.log('PDF file:', pdfFile);
-
 
     try {
         const fileName = 'kolokium.pdf';
@@ -34,8 +28,6 @@ exports.deleteFile = async (req, res) => {
         const result = await TemplateSurat.findOne({
             where: { id: id },
           }); 
-    
-          console.log("file",result.path);
           if (!result) {
             return res.status(404).json({ message: `Letter with id ${id} not found.` });
           } 

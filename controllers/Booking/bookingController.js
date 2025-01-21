@@ -47,12 +47,8 @@ module.exports = {
         const todayBookings = result.filter(booking => {
           const bookingDate = moment(booking.booking_date, moment.ISO_8601).format('YYYY-MM-DD');
           const endTime = moment(`${bookingDate} ${booking.end_time}`, moment.ISO_8601);
-          console.log("bokkdate:", bookingDate);
-          console.log("endTime:", endTime);
           return bookingDate === currentDate && endTime.isAfter(currentTime);
         });
-
-        console.log("logday: ", todayBookings)
     
         res.json(todayBookings);
       } catch (error) {
@@ -66,14 +62,10 @@ module.exports = {
           // Mendapatkan query parameters untuk filter berdasarkan tanggal
           const { startDate, endDate } = req.query;
 
-          console.log("date1:", startDate)
-
           // Membuat kondisi pencarian berdasarkan tanggal
           if (!startDate || !endDate) {
             return res.status(400).json({message: "Start date and end date are required"})  
           }
-
-          console.log("date1:", startDate)
 
           // Mengambil semua data booking dengan filter jika ada
           const result = await Booking.findAll({
@@ -617,7 +609,6 @@ module.exports = {
         });
       }
       res.status(200).json(Booked);
-      console.log("nilai room:",Booked.Room);
     } catch (error) {
       res.status(500).json({ message: "Internal server Error", error: error.message });
     }
@@ -664,7 +655,6 @@ module.exports = {
                   { jumlah: updatedJumlah },
                   { where: { tool_id: Booked.tool_id }, transaction }
               );
-              console.log("jumlah:", updatedJumlah);
           }
 
             Booked.note = note; 
@@ -712,7 +702,7 @@ module.exports = {
             return res.status(400).json({ message: 'Note is required when rejecting as lab admin.' });
           }
 
-          if (verify_status === true && (booking.Tool.require_double_verification == false || booking.Room.require_double_verification === false)) {
+          if (verify_status === true && (!booking.Tool?.require_double_verification || !booking.Room?.require_double_verification)) {
             booking.booking_status = 'approved';
           }
   
@@ -737,7 +727,7 @@ module.exports = {
             return res.status(400).json({ message: 'Note is required when rejecting as lab admin.' });
           }
 
-          if (verify_status === true && booking.Tool.require_double_verification == false) {
+          if (verify_status === true && !booking.Tool?.require_double_verification) {
             booking.booking_status = 'approved';
           }
   
@@ -763,7 +753,7 @@ module.exports = {
             return res.status(400).json({ message: 'Note is required when rejecting as lab admin.' });
           }
 
-          if (verify_status === true && (booking.Tool.require_double_verification == false || booking.Room.require_double_verification === false)) {
+          if (verify_status === true && !booking.Room?.require_double_verification) {
             booking.booking_status = 'approved';
           }
   
@@ -833,8 +823,6 @@ module.exports = {
   getFilteredBooking: async (req, res) => {
     try {
       const roleAdm = req.adminData.role;
-
-      console.log("role admin:", roleAdm);
       let whereCondition = {};
 
       if (roleAdm === 'admin_staff') {
@@ -885,9 +873,7 @@ module.exports = {
           verified_admin_room: true,
           verified_admin_leader: null
         };
-      }
-
-      console.log("apa isi:", whereCondition)
+      };
 
       const bookings = await Booking.findAll({
         where: whereCondition,
@@ -1329,7 +1315,6 @@ module.exports = {
         try {
           // await req.transporter.sendMail(userMailOptions);
           await req.transporter.sendMail(adminMailOptions);
-          console.log('Email sent successfully');
         } catch (error) {
           console.error('Error sending email:', error);
         } 
@@ -1436,6 +1421,8 @@ module.exports = {
   createBookingToolSpecialAdmin: async (req, res) => {
     try {
       const userId = req.adminData.id;
+
+      const role = req.adminData.role
       const { 
         tool_id,
         peminjam,
@@ -1457,9 +1444,6 @@ module.exports = {
         const startTime = combineDateTime(booking_date, start_time);
         const endTime = combineDateTime(booking_date, end_time);	
         const now = new Date();
-
-        console.log("waktu mulai:", startTime);
-        console.log("waktu selesai:", endTime);
 
         if (startTime < now) {
           return res.status(400).json({message: 'Tidak dapat memesan pada waktu yang telah lampau'})
@@ -1494,7 +1478,7 @@ module.exports = {
         const tool = await Tool.findOne({
           where: { tool_id: tool_id },
         });
-        console.log("datatool:",quantity);
+        
         if (!tool) {
           return res.status(404).json({ message: 'Alat tidak ditemukan'});
         }
@@ -1571,9 +1555,6 @@ module.exports = {
         const endTime = new combineDateTime(booking_date, end_time);
         const now = new Date()
 
-        console.log("waktu mulai:", startTime);
-        console.log("waktu selesai:", endTime);	
-
         if (startTime < now) {
           return res.status(400).json({ message: 'Tidak dapat memesan pada waktu yang telah lampau'})
         }
@@ -1607,7 +1588,7 @@ module.exports = {
         const tool = await Tool.findOne({
           where: { tool_id: tool_id },
         });
-        console.log("datatool:",tool);
+        
         if (!tool) {
           return res.status(404).json({ message: 'Alat tidak ditemukan'});
         }
@@ -1695,7 +1676,7 @@ module.exports = {
             try {
               await req.transporter.sendMail(userMailOptions);
               await req.transporter.sendMail(adminMailOptions);
-              console.log('Email sent successfully');
+              
             } catch (error) {
               console.error('Error sending email:', error);
             }
@@ -1735,10 +1716,6 @@ module.exports = {
       const booking_date = booking.booking_date.toISOString();
       const start_time = booking.start_time;
       const end_time = booking.end_time;
-      
-      console.log("tanggal:", booking_date);
-      console.log("waktu mulai:", start_time);
-      console.log("waktu selesai:", end_time);
 
       const availableRoooms = await Room.findAll({
         where: {
@@ -1760,7 +1737,6 @@ module.exports = {
       if (availableRoooms.length === 0) {
         return res.status(404).json({ message: "Tidak ada ruangan alternatif yang tersedia."});
       }
-      console.log("apa isi rooms:", availableRoooms.length)
       res.status(200).json({ rooms: availableRoooms});
     } catch (error) {
       console.error(error);
@@ -1806,7 +1782,6 @@ module.exports = {
       const booking = await Booking.findOne({
         where: { id: id }
       })
-      //console.log(`Booking :`, booking)
 
       if (!booking) {
         return res.status(404).json({ message: "Booking not found"});

@@ -98,7 +98,6 @@ module.exports = {
           try {
             if(fs.existsSync(previousImagePath)) {
             await fs.promises.unlink(previousImagePath); // Use fs.promises for async/await
-            console.log(`Previous image ${result.gambar_room} deleted.`);
           } 
         } catch (error) {
             console.error(`Error deleting previous image: ${error}`);
@@ -191,7 +190,6 @@ module.exports = {
       
       if (room) {
         const imagePath = path.join('public/images', room.gambar_room); 
-        console.log("path:", imagePath);
         try {
           if(fs.existsSync(imagePath)) {
           await fs.promises.unlink(imagePath);

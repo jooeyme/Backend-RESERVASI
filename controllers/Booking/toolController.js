@@ -96,7 +96,6 @@ module.exports = {
           const previousImagePath = path.join('public/images/', result.gambar_tool); // Adjust path as needed
           try {
             await fs.promises.unlink(previousImagePath); // Use fs.promises for async/await
-            console.log(`Previous image ${result.gambar_tool} deleted.`);
           } catch (error) {
             console.error(`Error deleting previous image: ${error}`);
             // Consider returning an appropriate error response if deletion is critical
@@ -181,7 +180,6 @@ module.exports = {
       const tool = await Tool.findOne({
         where: { id: id },
       });
-      console.log("apakah ada tool?:",tool)
 
       if (tool) {
         const imagePath = path.join('public/images/', tool.gambar_tool);
