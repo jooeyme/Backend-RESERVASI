@@ -552,7 +552,7 @@ module.exports = {
       try {
           if (!Booking || !Booking.findAll) {
               throw new Error("Rooms not found");
-          }
+          };
           const result = await Booking.findAll({
             include: [Room, Tool]
           });
@@ -822,6 +822,7 @@ module.exports = {
     try {
       const roleAdm = req.adminData.role;
 
+      console.log("role admin:", roleAdm);
       let whereCondition = {};
 
       if (roleAdm === 'admin_staff') {
@@ -841,7 +842,7 @@ module.exports = {
           verified_admin_lab: null,
         };
 
-      } else if (roleAdm === 'admin' || roleAdm === 'admin_tu') {
+      } else if (roleAdm === 'admin') {
         whereCondition = {
           [Sequelize.Op.or]: [
             {'$Room.type$': 'class'},
@@ -849,12 +850,14 @@ module.exports = {
           ],
           booking_status: 'pending',
           verified_admin_room: null,
-          verified_admin_tu: null
         };
 
       } else if (roleAdm === 'admin_tu') {
         whereCondition = {
           [Sequelize.Op.or]: [
+            {'$Room.type$': 'lab'},
+            {'$Tool.type$': 'lab'},
+            {'$Tool.type$': 'multimedia'},
             {'$Tool.require_double_verification$': true},
             {'$Room.require_double_verification$': true}
           ],
@@ -871,6 +874,8 @@ module.exports = {
           verified_admin_leader: null
         };
       }
+
+      console.log("apa isi:", whereCondition)
 
       const bookings = await Booking.findAll({
         where: whereCondition,
@@ -1741,7 +1746,6 @@ module.exports = {
       });
 
       if (availableRoooms.length === 0) {
-        
         return res.status(404).json({ message: "Tidak ada ruangan alternatif yang tersedia."});
       }
       console.log("apa isi rooms:", availableRoooms.length)
@@ -1757,17 +1761,27 @@ module.exports = {
       const { id } = req.params;
       const { newRoomId, note} = req.body;
 
+      // Validasi input
+      if (!newRoomId || !note) {
+        return res.status(400).json({ message: "New room ID and note are required" });
+      }
+
       const booking = await Booking.findByPk(id);
       if(!booking) {
         return res.status(404).json({message: "Booking not found"});
       }
 
+      const previousRoomId = booking.room_id; // room_id sebelum dipindahkan
+      const updatedNote = `Reservasi dipindahkan ke ruangan ${newRoomId} dari sebelumnya ruangan ${previousRoomId}. Catatan tambahan: ${note}`;
+
       booking.room_id = newRoomId;
       booking.booking_status = 'moved';
-      booking.note = note;
+      booking.note = updatedNote;
       await booking.save();
 
-      res.status(200).json({message: "Reservation moved successfully"})
+      res.status(200).json({
+        message: "Reservation moved successfully",
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({message: "Internal Server Error"})
@@ -1868,7 +1882,6 @@ module.exports = {
         const tool = await Tool.findOne({
           where: { tool_id: book.tool_id}
         });
-  
         if (!tool) {
           return res.status(404).json({ message: "Tool not found"});
         }
@@ -1878,7 +1891,6 @@ module.exports = {
           { jumlah: updatedJumlah},
           {where: {tool_id: book.tool_id}}
         );
-  
       }
 
       const result = await Booking.destroy({
@@ -1901,7 +1913,6 @@ module.exports = {
   getBookingByRoomId: async (req, res) => {
     try {
       const { room_id } = req.params;
-      
       const result = await Booking.findAll({
           where: {
               room_id: room_id,
@@ -1921,7 +1932,6 @@ module.exports = {
   getBookingByToolId: async (req, res) => {
     try {
       const { tool_id } = req.params;
-      
       const result = await Booking.findAll({
           where: {
               tool_id: tool_id,

@@ -47,7 +47,7 @@ module.exports = {
             }
         });
         if(!user) return res.status(404).json({msg: "User tidak ditemukan"});
-        const {username, email, password, NIM, dept} = req.body;
+        const {username, email, password, NIM, dept, alamat} = req.body;
         // let hashPassword;
         // if(password === "" || password === null){
         //     hashPassword = user.password
@@ -61,7 +61,8 @@ module.exports = {
                 email: email,
                 password: password,
                 NIM: NIM,
-                dept: dept
+                dept: dept,
+                alamat:alamat,
             },{
                 where:{
                     id: user.id
