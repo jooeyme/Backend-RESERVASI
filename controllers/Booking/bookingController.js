@@ -711,6 +711,10 @@ module.exports = {
           if (verify_status === false && !note) {
             return res.status(400).json({ message: 'Note is required when rejecting as lab admin.' });
           }
+
+          if (verify_status === true && (booking.Tool.require_double_verification == false || booking.Room.require_double_verification === false)) {
+            booking.booking_status = 'approved';
+          }
   
           if (verify_status === false) {
             booking.booking_status = 'rejected';
@@ -732,6 +736,10 @@ module.exports = {
           if (verify_status === false && !note) {
             return res.status(400).json({ message: 'Note is required when rejecting as lab admin.' });
           }
+
+          if (verify_status === true && booking.Tool.require_double_verification == false) {
+            booking.booking_status = 'approved';
+          }
   
           if (verify_status === false) {
             booking.booking_status = 'rejected';
@@ -747,12 +755,16 @@ module.exports = {
       }}
 
       // Verifikasi oleh Admin Room = 'admin' atau Admin TU = 'admin_tu'
-      if (roleAdm === 'admin' || roleAdm === 'admin_tu') {
+      if (roleAdm === 'admin') {
         if (booking.Room?.type === 'meeting' || booking.Room?.type === 'class' ) {
           booking.verified_admin_room = verify_status;
         
           if (verify_status === false && !note) {
             return res.status(400).json({ message: 'Note is required when rejecting as lab admin.' });
+          }
+
+          if (verify_status === true && (booking.Tool.require_double_verification == false || booking.Room.require_double_verification === false)) {
+            booking.booking_status = 'approved';
           }
   
           if (verify_status === false) {
