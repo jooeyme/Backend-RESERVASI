@@ -32,9 +32,9 @@ const transporter = async (req, res, next) => {
                 // refreshToken: REFRESH_TOKEN,
                 // accessToken,
             },
-            pool: true,
-            maxConnections: 5,
-            maxMessages: 100,
+            // pool: true,
+            // maxConnections: 5,
+            // maxMessages: 100,
         });
 
         req.transporter = transporter; // Menyimpan transporter ke dalam req

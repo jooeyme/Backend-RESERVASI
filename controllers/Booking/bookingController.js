@@ -1185,6 +1185,7 @@ module.exports = {
   },
 
   createBookingRoom: async (req, res) => {
+    const transaction = await sequelize.transaction();
     try {
       const userId = req.userData.id;
       const { 
@@ -1206,6 +1207,7 @@ module.exports = {
         },
         attributes: [ 'email' ]
       })
+      console.log("isi email pengguna:", pengguna.email)
       
       const createdBookings = []
       // Buat Booking baru di database
@@ -1217,10 +1219,12 @@ module.exports = {
         const now = new Date();
 
         if (startTime < now) {
+          await transaction.rollback();
           return res.status(400).json({message: 'Tidak dapat memesan pada waktu yang telah lampau'})
         }
 
         if (startTime >= endTime) {
+          await transaction.rollback();
           return res.status(400).json({ message: 'Waktu mulai harus sebelum waktu selesai.' });
         }
 
@@ -1243,6 +1247,8 @@ module.exports = {
         });
     
         if (conflict) {
+          await transaction.rollback();
+          console.log('Conflict detected:', conflict);
           return res.status(400).json({ message: 'Waktu sudah direservasi, silakan pilih waktu lain.' });
         }
         
@@ -1260,7 +1266,9 @@ module.exports = {
           booking_date: session.booking_date,
           start_time: session.start_time,
           end_time: session.end_time,
-        });
+        },
+        {transaction}
+      );
         createdBookings.push(newBooking);
       }
 
@@ -1291,7 +1299,7 @@ module.exports = {
         // Kirim email untuk admin
         const adminMailOptions = {
           from: email, // Ganti dengan email Anda
-          to: pengguna, // Ganti dengan email admin
+          to: pengguna.email, // Ganti dengan email admin
           subject: 'Notifikasi Booking Baru',
           text: `
             Halo Admin,
@@ -1319,17 +1327,19 @@ module.exports = {
           console.error('Error sending email:', error);
         } 
 
+        await transaction.commit();
         res.status(201).json({
             message: "Booking created successfully",
             data: createdBookings,
             userID: userId,
         });
         } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: "Internal server error",
-        });
-        }
+          await transaction.rollback();
+          console.error(error);
+          res.status(500).json({
+              message: "Internal server error",
+          });
+          }
   },
 
   createBookingSpecialAdmin: async (req, res) => {
