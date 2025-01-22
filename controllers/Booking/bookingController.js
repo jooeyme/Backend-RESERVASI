@@ -1234,6 +1234,7 @@ module.exports = {
         const conflict = await Booking.findOne({
           where: {
             room_id: room_id,
+            booking_status: ['pending', 'approved', 'moved'],
             [Sequelize.Op.or]: [
               {
                 start_time: {[Sequelize.Op.lt]: endTime,},
@@ -1381,6 +1382,7 @@ module.exports = {
         const conflict = await Booking.findOne({
           where: {
             room_id: room_id,
+            booking_status: ['pending', 'approved', 'moved'],
             [Sequelize.Op.or]: [
               {
                 start_time: {[Sequelize.Op.lt]: endTime,},
@@ -1469,6 +1471,7 @@ module.exports = {
         const conflict = await Booking.findOne({
           where: {
             tool_id: tool_id,
+            booking_status: ['pending', 'approved', 'moved'],
             [Sequelize.Op.or]: [
               {
                 start_time: {[Sequelize.Op.lt]: endTime,},
@@ -1579,6 +1582,7 @@ module.exports = {
         const conflict = await Booking.findOne({
           where: {
             tool_id: tool_id,
+            booking_status: ['pending', 'approved', 'moved'],
             [Sequelize.Op.or]: [
               {
                 start_time: {[Sequelize.Op.lt]: endTime,},
