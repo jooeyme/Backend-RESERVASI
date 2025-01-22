@@ -1235,6 +1235,7 @@ module.exports = {
           where: {
             room_id: room_id,
             booking_status: ['pending', 'approved', 'moved'],
+            booking_date: booking_date,
             [Sequelize.Op.or]: [
               {
                 start_time: {[Sequelize.Op.lt]: endTime,},
@@ -1383,6 +1384,7 @@ module.exports = {
           where: {
             room_id: room_id,
             booking_status: ['pending', 'approved', 'moved'],
+            booking_date: booking_date,
             [Sequelize.Op.or]: [
               {
                 start_time: {[Sequelize.Op.lt]: endTime,},
@@ -1472,6 +1474,7 @@ module.exports = {
           where: {
             tool_id: tool_id,
             booking_status: ['pending', 'approved', 'moved'],
+            booking_date: booking_date,
             [Sequelize.Op.or]: [
               {
                 start_time: {[Sequelize.Op.lt]: endTime,},
@@ -1583,6 +1586,7 @@ module.exports = {
           where: {
             tool_id: tool_id,
             booking_status: ['pending', 'approved', 'moved'],
+            booking_date: booking_date,
             [Sequelize.Op.or]: [
               {
                 start_time: {[Sequelize.Op.lt]: endTime,},
