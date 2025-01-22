@@ -1218,6 +1218,9 @@ module.exports = {
         const endTime = combineDateTime(booking_date, end_time);	
         const now = new Date();
 
+        console.log("startTime:", startTime)
+        console.log("endTime:", endTime)
+
         if (startTime < now) {
           await transaction.rollback();
           return res.status(400).json({message: 'Tidak dapat memesan pada waktu yang telah lampau'})
