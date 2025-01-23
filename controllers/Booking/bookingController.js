@@ -1208,6 +1208,8 @@ module.exports = {
         attributes: [ 'email' ]
       })
       console.log("isi email pengguna:", pengguna.email)
+      console.log("isi dari jenis pengguna:", jenis_pengguna)
+      console.log("isi dari jenis kegiatan:", jenis_kegiatan)
       
       const createdBookings = []
       // Buat Booking baru di database
