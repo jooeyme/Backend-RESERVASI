@@ -49,6 +49,7 @@ module.exports = (sequelize, DataTypes) => {
     desk_activity: DataTypes.STRING,
     dept: DataTypes.STRING,
     is_admin: DataTypes.BOOLEAN,
+    path_file: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'Booking',

@@ -11,6 +11,7 @@ const createDirectory = (directory) => {
 const ImagesStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const imagePath = path.join('public/images/');
+    createDirectory(imagePath);
     cb(null, imagePath);
   },
   filename: (req, file, cb) => {

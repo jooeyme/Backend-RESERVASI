@@ -3,16 +3,18 @@ const router = express.Router();
 const bookingController = require("../controllers/Booking/bookingController");
 const {authenticate, authorize} = require("../middleware/authRole")
 const {transporter} = require("../middleware/trasnporter")
+const multer = require("multer");
 
+const upload = multer({ dest: "uploads/" });
 
 // Definisikan rute untuk mendapatkan semua pengguna
 router.get("/",  bookingController.findAllBooking);
 router.get("/my_booking", authenticate, authorize(["user"], "user"), bookingController.findAllBookingByUserId);
 router.get("/admin_booking", authenticate, authorize(["admin", "super_admin", "admin_staff", "admin_leader", "admin_tu" ], "admin"), bookingController.findAllBookingByAdminId)
-router.post("/room", authenticate, authorize(["user"], "user"), transporter, bookingController.createBookingRoom);
+router.post("/room", upload.single("file"), authenticate, authorize(["user"], "user"), transporter, bookingController.createBookingRoom);
 router.post("/room-admin", authenticate, authorize(["admin", "super_admin", "admin_staff", "admin_leader", "admin_tu"], "admin"), bookingController.createBookingSpecialAdmin);
 router.post("/tool-admin", authenticate, authorize(["admin", "super_admin", "admin_staff", "admin_leader", "admin_tu"], "admin"), bookingController.createBookingToolSpecialAdmin);
-router.post("/tool", authenticate, authorize(["user"], "user"),  transporter, bookingController.createBookingTool);
+router.post("/tool", upload.single("file"), authenticate, authorize(["user"], "user"),  transporter, bookingController.createBookingTool);
 router.get("/:id",  bookingController.showBookingById);
 router.patch("/:id", authenticate, authorize(["super_admin"], "admin"), bookingController.editBooking);
 router.delete("/delete/:id",  bookingController.deleteBooking);

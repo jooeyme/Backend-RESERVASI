@@ -73,6 +73,7 @@ module.exports = {
             deskripsi,
             require_double_verification,
             type,
+            pengelola,
           } = req.body;
 
       const result = await Tool.findOne({
@@ -116,6 +117,7 @@ module.exports = {
             gambar_tool: newGambarTool, 
             require_double_verification: require_double_verification,
             type: type,
+            pengelola: pengelola,
         },
         {
           where: {
@@ -144,6 +146,7 @@ module.exports = {
             deskripsi,
             require_double_verification,
             type, 
+            pengelola,
           } = req.body;
         
         const gambar_tool = req.file.filename; 
@@ -159,6 +162,7 @@ module.exports = {
         gambar_tool: gambar_tool, 
         require_double_verification: require_double_verification,
         type: type,
+        pengelola: pengelola,
       });
 
       res.status(201).json({

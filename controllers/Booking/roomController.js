@@ -73,6 +73,7 @@ module.exports = {
         fasilitas,
         require_double_verification,
         type,
+        pengelola,
       } = req.body;
       //const gambar_room = req.file.filename;
 
@@ -119,6 +120,7 @@ module.exports = {
             fasilitas: fasilitas, 
             require_double_verification: require_double_verification,
             type: type,
+            pengelola: pengelola,
             gambar_room: newGambarRoom, 
         },
         {
@@ -149,6 +151,7 @@ module.exports = {
             fasilitas,
             require_double_verification,
             type,
+            pengelola,
           } = req.body;
         
         const gambar_room = req.file.filename;
@@ -165,6 +168,7 @@ module.exports = {
         fasilitas: fasilitas, 
         require_double_verification: require_double_verification,
         type: type,
+        pengelola: pengelola,
         gambar_room: gambar_room, 
       });
 
@@ -179,7 +183,6 @@ module.exports = {
       });
     }
   },
-
  
   deleteRoom: async (req, res) => {
     try {

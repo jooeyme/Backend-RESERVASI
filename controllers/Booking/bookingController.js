@@ -14,6 +14,9 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
 const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
 const email = process.env.EMAIL_MNH;
+const emailAdmin = process.env.EMAIL_ADMIN;
+const uploadToGoogleDrive = require('../../middleware/documentStorage');
+const deleteFileFromDrive = require('../../middleware/deleteDocumentDrive')
 
 // const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 // oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
@@ -25,8 +28,18 @@ function combineDateTime(dateString, timeString) {
   const [hours, minutes] = timeString.split(":").map(Number);
 
   // Buat objek Date dengan komponen yang digabung
-  return new Date(year, month - 1, day, hours, minutes);
+  return new Date(Date.UTC(year, month - 1, day, hours, minutes));
+};
+
+function formatDateWithTimezone(dateStr) {
+  const date = new Date(`${dateStr}T07:00:00+07:00`);
+  return date.toISOString();
+};
+
+function formatTime(inputTime) {
+  return inputTime.length === 5 ? `${inputTime}:00` : inputTime; // Menambahkan ":00" jika hanya "HH:mm"
 }
+
 module.exports = {
   getTodayBookings: async (req, res) => {
     try {
@@ -776,7 +789,7 @@ module.exports = {
           booking.verified_admin_tu = verify_status;
   
           if (verify_status === false && !note) {
-            return res.status(400).json({ message: 'Note is required when rejecting as super admin.' });
+            return res.status(400).json({ message: 'Note is required when rejecting' });
           }
           
           if (verify_status === false) {
@@ -797,7 +810,7 @@ module.exports = {
         if (booking.Room?.require_double_verification && booking.verified_admin_room) {
           booking.verified_admin_leader = verify_status;
 
-          if (verify_status === 'false') {
+          if (verify_status === false) {
             booking.booking_status = 'rejected';
             booking.note = note;
           } else {
@@ -1201,6 +1214,20 @@ module.exports = {
       const statusBooking = 'pending';
       const quantity = 1;
 
+      const file = req.file;
+      if (!file) return res.status(404).send("No file uploaded");
+
+      const fileUrl = await uploadToGoogleDrive(file.path, file.originalname);
+
+      //console.log("apa isi url:", fileUrl);
+      let parsedBookings = [];
+      try {
+          parsedBookings = JSON.parse(bookings); // Mengonversi bookings menjadi array
+      } catch (error) {
+          console.error("Error parsing bookings JSON:", error);
+          return res.status(400).json({ message: "Invalid bookings data" });
+      }
+
       const pengguna = await User.findOne({
         where: {
           id: userId,
@@ -1212,16 +1239,23 @@ module.exports = {
       console.log("isi dari jenis kegiatan:", jenis_kegiatan)
       
       const createdBookings = []
+      const Sesi = [];
       // Buat Booking baru di database
-      for (const session of bookings) {
+      for (const session of parsedBookings) {
         const { booking_date, start_time, end_time } = session;
 
+        const formatDate = formatDateWithTimezone(booking_date);
+        const formatstart = formatTime(start_time);
+        const formatend = formatTime(end_time);
         const startTime = combineDateTime(booking_date, start_time);
         const endTime = combineDateTime(booking_date, end_time);	
         const now = new Date();
 
+        console.log("bookingdate:", formatDate);
         console.log("startTime:", startTime)
         console.log("endTime:", endTime)
+        console.log("orisinil start:", formatstart)
+        console.log("orisinil end:", formatend)
 
         if (startTime < now) {
           await transaction.rollback();
@@ -1236,19 +1270,25 @@ module.exports = {
         const conflict = await Booking.findOne({
           where: {
             room_id: room_id,
-            booking_status: ['pending', 'approved', 'moved'],
-            booking_date: booking_date,
+            booking_status: {[Sequelize.Op.in]: ['pending', 'approved', 'moved']},
+            booking_date: formatDate,
             [Sequelize.Op.or]: [
               {
-                start_time: {[Sequelize.Op.lt]: endTime,},
-                end_time: {[Sequelize.Op.gt]: startTime,},
+                start_time: { [Sequelize.Op.lt]: formatend },
+                end_time: { [Sequelize.Op.gt]: formatstart }
+              },
+              // 2. Sesi yang ada dimulai di antara waktu booking baru
+              {
+                start_time: { [Sequelize.Op.gte]: formatstart, [Sequelize.Op.lt]: formatend }
               },
               {
-                start_time: {[Sequelize.Op.gte]: startTime, [Sequelize.Op.lt]: endTime},  
+                end_time: { [Sequelize.Op.gt]: formatstart, [Sequelize.Op.lte]: formatend }
               },
+              // 3. Sesi yang ada mencakup keseluruhan waktu booking baru
               {
-                end_time: {[Sequelize.Op.gt]: startTime, [Sequelize.Op.lte]: endTime},
-              },
+                start_time: { [Sequelize.Op.lte]: formatstart },
+                end_time: { [Sequelize.Op.gte]: formatend }
+              }
             ],
           },
         });
@@ -1259,6 +1299,12 @@ module.exports = {
           return res.status(400).json({ message: 'Waktu sudah direservasi, silakan pilih waktu lain.' });
         }
         
+        const sesi_date = {
+          booking_date: session.booking_date,
+          start_time: session.start_time,
+          end_time: session.end_time
+        }
+
         const newBooking = await Booking.create({
           user_id: userId,
           room_id: room_id,
@@ -1273,80 +1319,103 @@ module.exports = {
           booking_date: session.booking_date,
           start_time: session.start_time,
           end_time: session.end_time,
+          path_file: fileUrl
         },
         {transaction}
       );
+        Sesi.push(sesi_date);
         createdBookings.push(newBooking);
-      }
+      };
 
-        // Kirim notifikasi email setelah booking berhasil dibuat
-        // const userMailOptions = {
-        //   from: 'mtejo25@gmail.com', // Ganti dengan email Anda
-        //   to: 'tejom697@gmail.com', // Email peminjam yang dikirim melalui req.body
-        //   subject: 'Booking Ruangan Berhasil',
-        //   text: `
-        //     Halo ${peminjam},
+      let sessionDetails = Sesi.map((sesi, index) => {
+        return `
+          Peminjaman ${index + 1}
+          - Tanggal: ${moment(sesi.booking_date).format('DD MMM YYYY')}
+          - Waktu Mulai: ${sesi.start_time}
+          - Waktu Selesai: ${sesi.end_time}
+        `;
+      }).join('\n');
 
-        //     Booking Anda telah berhasil dibuat dengan rincian sebagai berikut:
+      // Kirim notifikasi email setelah booking berhasil dibuat
+      const userMailOptions = {
+        from: email, // Ganti dengan email Anda
+        to: pengguna.email, // Email peminjam yang dikirim melalui req.body
+        subject: `Booking Ruangan ${room_id} Berhasil`,
+        html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1>Forest Management Services</h1>
+          </div>
+          <p>Hello, ${peminjam}</p>
+          <p>Booking Anda telah berhasil dibuat dengan rincian sebagai berikut:</p>
+          <ul>
+            <li>Ruangan : ${room_id}</li>
+            <li>Pengguna : ${jenis_pengguna}</li>
+            <li>Kegiatan : ${jenis_kegiatan}</li>
+            <li>Aktivitas : ${desk_activity}</li>
+            <li>Status : ${statusBooking}</li>
+          </ul>
+          <p>Rincian waktu peminjaman:</p>
+          <span>${sessionDetails}</span>
+        
+          <p>Terima kasih telah menggunakan layanan kami.</p>
+          <p>Thanks,</p>
+          <p>Forest Management</p>
+        </div>
+        `,
+      };
 
-        //     - Ruangan: ${room_id}
-        //     - Tanggal: ${moment(booking_date).format('DD MMM YYYY')}
-        //     - Waktu Mulai: ${start_time}
-        //     - Waktu Selesai: ${end_time}
-        //     - Aktivitas: ${desk_activity}
-        //     - Status: ${statusBooking}
+      // Kirim email untuk admin
+      const adminMailOptions = {
+        from: email, // Ganti dengan email Anda
+        to: emailAdmin, // Ganti dengan email admin
+        subject: `Notifikasi Booking Baru Ruangan ${room_id}`,
+        html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1>Forest Management Services</h1>
+          </div>
+          <p>Hello,</p>
+          <p>Ada booking baru yang telah dibuat dengan rincian sebagai berikut:</p>
+          <ul>
+            <li>Ruangan : ${room_id}</li>
+            <li>Peminjam : ${peminjam}</li>
+            <li>Pengguna : ${jenis_pengguna}</li>
+            <li>Kegiatan : ${jenis_kegiatan}</li>
+            <li>Aktivitas : ${desk_activity}</li>
+            <li>Status : ${statusBooking}</li>
+          </ul>
+          <p>Rincian waktu peminjaman:</p>
+          <span>${sessionDetails}</span>
+        
+          <p>Mohon untuk memeriksa detail booking ini di sistem.</p>
+          <p>Thanks,</p>
+          <p>Forest Management</p>
+        </div>
+        `,
+      };
 
-        //     Terima kasih telah menggunakan layanan kami.
-
-        //     Salam,
-        //     Admin
-        //   `,
-        // };
-
-        // Kirim email untuk admin
-        const adminMailOptions = {
-          from: email, // Ganti dengan email Anda
-          to: pengguna.email, // Ganti dengan email admin
-          subject: 'Notifikasi Booking Baru',
-          text: `
-            Halo Admin,
-
-            Ada booking baru yang telah dibuat dengan rincian sebagai berikut:
-
-            - Pemesan: ${peminjam}
-            - Ruangan: ${room_id}
-            - Tanggal: ${moment(bookings.booking_date).format('DD MMM YYYY')}
-            - Waktu Mulai: ${bookings.start_time}
-            - Waktu Selesai: ${bookings.end_time}
-            - Aktivitas: ${desk_activity}
-            - Status: ${statusBooking}
-
-            Mohon untuk memeriksa detail booking ini di sistem.
-
-            Terima kasih.
-          `,
-        };
-
-        try {
-          // await req.transporter.sendMail(userMailOptions);
-          await req.transporter.sendMail(adminMailOptions);
-        } catch (error) {
-          console.error('Error sending email:', error);
-        } 
-
-        await transaction.commit();
-        res.status(201).json({
-            message: "Booking created successfully",
-            data: createdBookings,
-            userID: userId,
+      try {
+        await req.transporter.sendMail(userMailOptions);
+        await req.transporter.sendMail(adminMailOptions);
+      } catch (error) {
+        console.error('Error sending email:', error);
+      } 
+  
+      await transaction.commit();
+      fs.unlinkSync(file.path);
+      
+      res.status(201).json({
+          message: "Booking created successfully",
+          data: createdBookings,
+      });
+      } catch (error) {
+        await transaction.rollback();
+        console.error(error);
+        res.status(500).json({
+            message: "Internal server error",
         });
-        } catch (error) {
-          await transaction.rollback();
-          console.error(error);
-          res.status(500).json({
-              message: "Internal server error",
-          });
-          }
+        }
   },
 
   createBookingSpecialAdmin: async (req, res) => {
@@ -1546,6 +1615,7 @@ module.exports = {
   },
 
   createBookingTool: async (req, res) => {
+    const transaction = await sequelize.transaction();
     try {          
       const usersId = req.userData.id;
       const { 
@@ -1561,26 +1631,49 @@ module.exports = {
       } = req.body; // Ambil data dari body permintaan
       const statusBooking = 'pending';
 
+      const file = req.file;
+      if (!file) return res.status(404).send("No file uploaded");
+
+      const fileUrl = await uploadToGoogleDrive(file.path, file.originalname);
+
+      let parsedBookings = [];
+      try {
+          parsedBookings = JSON.parse(bookings); // Mengonversi bookings menjadi array
+      } catch (error) {
+          console.error("Error parsing bookings JSON:", error);
+          return res.status(400).json({ message: "Invalid bookings data" });
+      }
+
       const pengguna = await User.findOne({
         where: {
           id: usersId,
         },
         attributes: [ 'email' ]
       })
+
+      const Sesi = [];
       
       const createdBookings = [];
-      for (const session of bookings){
+      for (const session of parsedBookings) {
         const { booking_date, start_time, end_time} = session;
       
         const startTime = new combineDateTime(booking_date, start_time);
         const endTime = new combineDateTime(booking_date, end_time);
         const now = new Date()
 
+        const sesi_date = {
+          booking_date: session.booking_date,
+          start_time: session.start_time,
+          end_time: session.end_time
+        }
+
         if (startTime < now) {
+          await transaction.rollback();
           return res.status(400).json({ message: 'Tidak dapat memesan pada waktu yang telah lampau'})
         }
 
         if (startTime >= endTime) {
+          await transaction.rollback();
           return res.status(400).json({ message: 'Waktu mulai harus sebelum waktu selesai.' });
         }
 
@@ -1605,6 +1698,7 @@ module.exports = {
         });
     
         if (conflict) {
+          await transaction.rollback();
           return res.status(400).json({ message: 'Waktu sudah direservasi, silakan pilih waktu lain.' });
         }
 
@@ -1613,17 +1707,20 @@ module.exports = {
         });
         
         if (!tool) {
+          await transaction.rollback();
           return res.status(404).json({ message: 'Alat tidak ditemukan'});
         }
 
         if (tool.jumlah < quantity) {
+          await transaction.rollback();
           return res.status(400).json({ message: 'Jumlah alat tersedia tidak mencukupi'});
         }
 
         const updateJumlah = tool.jumlah - quantity;
         await Tool.update(
           { jumlah: updateJumlah},
-          { where: { tool_id: tool_id} }
+          { where: { tool_id: tool_id} },
+          {transaction}
         );
             
       // Buat Booking baru di database
@@ -1641,79 +1738,104 @@ module.exports = {
             jenis_kegiatan: jenis_kegiatan,
             booking_status: statusBooking,
             quantity: quantity,
-        });
+            path_file: fileUrl
+        },
+        {transaction}
+      );
+        Sesi.push(sesi_date)
         createdBookings.push(newBooking);
       }
+
+      let sessionDetails = Sesi.map((session, index) => {
+        return `
+          Peminjaman ${index + 1}
+          - Tanggal: ${moment(session.booking_date).format('DD MMM YYYY')}
+          - Waktu Mulai: ${session.start_time}
+          - Waktu Selesai: ${session.end_time}
+        `;
+      }).join('\n');
+
+      // Kirim notifikasi email setelah booking berhasil dibuat
+      const userMailOptions = {
+        from: email, // Ganti dengan email Anda
+        to: pengguna.email, // Email peminjam yang dikirim melalui req.body
+      subject: `Booking Alat ${tool_id} Berhasil`,
+        html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1>Forest Management Services</h1>
+          </div>
+          <p>Hello, ${peminjam}</p>
+          <p>Booking Anda telah berhasil dibuat dengan rincian sebagai berikut:</p>
+          <ul>
+            <li>Alat : ${tool_id}</li>
+            <li>Jumlah alat : ${quantity}</li>
+            <li>Pengguna : ${jenis_pengguna}</li>
+            <li>Kegiatan : ${jenis_kegiatan}</li>
+            <li>Aktivitas : ${desk_activity}</li>
+            <li>Status : ${statusBooking}</li>
+          </ul>
+          <p>Rincian waktu peminjaman:</p>
+          <span>${sessionDetails}</span>
         
-            
+          <p>Terima kasih telah menggunakan layanan kami.</p>
+          <p>Thanks,</p>
+          <p>Forest Management</p>
+        </div>
+        `,
+      };
 
-            // Kirim notifikasi email setelah booking berhasil dibuat
-            const userMailOptions = {
-             from: email, // Ganti dengan email Anda
-             to: pengguna, // Email peminjam yang dikirim melalui req.body
-            subject: 'Booking Alat Berhasil',
-             text: `
-              Halo ${peminjam},
-
-               Booking Anda telah berhasil dibuat dengan rincian sebagai berikut:
-
-               - Alat: ${tool_id}
-               - Jumlah alat yang dipinjam ${bookings.quantity}
-               - Tanggal: ${moment(bookings.booking_date).format('DD MMM YYYY')}
-               - Waktu Mulai: ${bookings.start_time}
-               - Waktu Selesai: ${bookings.end_time}
-               - Aktivitas: ${desk_activity}
-               - Status: ${statusBooking}
-
-               Terima kasih telah menggunakan layanan kami.
-
-                Salam,
-                Admin
-              `,
-            };
-
-            // Kirim email untuk admin
-            const adminMailOptions = {
-              from: email, // Ganti dengan email Anda
-              to: 'spenseev9@gmail.com', // Ganti dengan email admin
-              subject: 'Notifikasi Booking Baru',
-              text: `
-                Halo Admin,
-
-                Ada booking baru yang telah dibuat dengan rincian sebagai berikut:
-
-                - Pemesan: ${peminjam}
-                - Alat: ${tool_id}
-                - Tanggal: ${moment(bookings.booking_date).format('DD MMM YYYY')}
-                - Waktu Mulai: ${bookings.start_time}
-                - Waktu Selesai: ${bookings.end_time}
-                - Aktivitas: ${desk_activity}
-                - Status: ${statusBooking}
-
-                Mohon untuk memeriksa detail booking ini di sistem.
-
-                Terima kasih.
-              `,
-            };
-
-            try {
-              await req.transporter.sendMail(userMailOptions);
-              await req.transporter.sendMail(adminMailOptions);
-              
-            } catch (error) {
-              console.error('Error sending email:', error);
-            }
+      // Kirim email untuk admin
+      const adminMailOptions = {
+        from: email, // Ganti dengan email Anda
+        to: emailAdmin, // Ganti dengan email admin
+        subject: `Notifikasi Booking Baru Alat ${tool_id}`,
+        html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1>Forest Management Services</h1>
+          </div>
+          <p>Hello,</p>
+          <p>Ada booking baru yang telah dibuat dengan rincian sebagai berikut:</p>
+          <ul>
+            <li>Alat : ${tool_id}</li>
+            <li>Jumlah alat : ${quantity}</li>
+            <li>Pengguna : ${jenis_pengguna}</li>
+            <li>Kegiatan : ${jenis_kegiatan}</li>
+            <li>Aktivitas : ${desk_activity}</li>
+            <li>Status : ${statusBooking}</li>
+          </ul>
+          <p>Rincian waktu peminjaman:</p>
+          <span>${sessionDetails}</span>
         
-            res.status(201).json({
-                message: "Booking created successfully",
-                data: createdBookings,
-            });
-            } catch (error) {
-            console.error(error);
-            res.status(500).json({
-                message: `Internal server error ${error.message}`,
-            });
-            }
+          <p>Mohon untuk memeriksa detail booking ini di sistem.</p>
+          <p>Thanks,</p>
+          <p>Forest Management</p>
+        </div>
+        `,
+      };
+
+      try {
+        await req.transporter.sendMail(userMailOptions);
+        await req.transporter.sendMail(adminMailOptions);
+        
+      } catch (error) {
+        console.error('Error sending email:', error);
+      }
+
+      await transaction.commit();
+      fs.unlinkSync(file.path);
+      res.status(201).json({
+          message: "Booking created successfully",
+          data: createdBookings,
+      });
+      } catch (error) {
+        await transaction.rollback();
+        console.error(error);
+        res.status(500).json({
+            message: `Internal server error ${error.message}`,
+        });
+      }
   },
 
   findAllBookingWithApproved: async (req, res) => {
@@ -1886,7 +2008,19 @@ module.exports = {
     try {
       const { id } = req.params;
 
-      const book = await Booking.findByPk(id)
+      const book = await Booking.findByPk(id);
+
+      if (!book) {
+        return res.status(404).json({ message: `Booking with id ${id} not found.` });
+      }
+
+      if (book.path_file) {
+        try {
+          await deleteFileFromDrive(book.path_file);
+        } catch (error) {
+          console.error("Error deleting file from Google Drive:", error.message);
+        }
+      }
 
       if(book.tool_id) {
         const tool = await Tool.findOne({
