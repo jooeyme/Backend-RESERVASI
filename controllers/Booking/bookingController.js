@@ -1219,7 +1219,6 @@ module.exports = {
 
       const fileUrl = await uploadToGoogleDrive(file.path, file.originalname);
 
-      //console.log("apa isi url:", fileUrl);
       let parsedBookings = [];
       try {
           parsedBookings = JSON.parse(bookings); // Mengonversi bookings menjadi array
@@ -1234,9 +1233,6 @@ module.exports = {
         },
         attributes: [ 'email' ]
       })
-      console.log("isi email pengguna:", pengguna.email)
-      console.log("isi dari jenis pengguna:", jenis_pengguna)
-      console.log("isi dari jenis kegiatan:", jenis_kegiatan)
       
       const createdBookings = []
       const Sesi = [];
@@ -1250,12 +1246,6 @@ module.exports = {
         const startTime = combineDateTime(booking_date, start_time);
         const endTime = combineDateTime(booking_date, end_time);	
         const now = new Date();
-
-        console.log("bookingdate:", formatDate);
-        console.log("startTime:", startTime)
-        console.log("endTime:", endTime)
-        console.log("orisinil start:", formatstart)
-        console.log("orisinil end:", formatend)
 
         if (startTime < now) {
           await transaction.rollback();
@@ -1295,7 +1285,6 @@ module.exports = {
     
         if (conflict) {
           await transaction.rollback();
-          console.log('Conflict detected:', conflict);
           return res.status(400).json({ message: 'Waktu sudah direservasi, silakan pilih waktu lain.' });
         }
         

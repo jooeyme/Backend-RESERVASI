@@ -10,7 +10,6 @@ const auth = new google.auth.GoogleAuth({
 });
 
 if (!fs.existsSync(process.env.GOOGLE_CREDENTIAL)) {
-    console.log(`apa isi dari ${process.env.GOOGLE_CREDENTIAL}`);
     throw new Error("Google Cloud credential file not found!");
 };
 

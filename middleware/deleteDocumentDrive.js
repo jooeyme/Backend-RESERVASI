@@ -18,7 +18,6 @@ const deleteFileFromDrive = async(fileUrl) => {
 
     try {
         await driveService.files.delete({ fileId });
-        console.log(`File dengan ID ${fileId} berhasil dihapus.`);
     } catch (error) {
         console.error("Error saat menghapus file:", error.message);
     }
