@@ -20,7 +20,7 @@ module.exports = {
       },
       role: {
         type: Sequelize.ENUM,
-        values: ['super_admin', 'admin', 'admin_staff', 'admin_leader', 'admin_tu'],
+        values: ['super_admin', 'admin', 'admin_staff', 'admin_leader', 'admin_tu', 'admin_mm'],
         defaultValue: 'admin'
       },
       createdAt: {
