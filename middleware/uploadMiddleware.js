@@ -60,6 +60,4 @@ const fileFilter = (req, file, cb) => {
   module.exports = {
     uploadImage,
     uploadDocument,
-    uploadIncomingLetter,
-    uploadOutgoingLetter
   };
