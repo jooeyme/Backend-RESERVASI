@@ -28,33 +28,14 @@ const DocumentStorage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, file.originalname + "-" + Date.now() + ext);
+    const base = path.basename(file.originalname, ext);
+    cb(null, base + '-' + Date.now() + ext);
   }
 });
 
-const IncomingLetterStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const incomingPath = path.join('/letter/incoming/');
-    createDirectory(incomingPath);
-    cb(null, incomingPath);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + "-" + Date.now() + ext);
-  }
-});
 
-const OutgoingLetterStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const outgoingPath = path.join('/letter/outgoing/');
-    createDirectory(outgoingPath);
-    cb(null, outgoingPath);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + "-" + Date.now() + ext);
-  }
-});
+
+
 
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
@@ -74,13 +55,7 @@ const fileFilter = (req, file, cb) => {
     storage: DocumentStorage,
   });
 
-  const uploadIncomingLetter = multer({
-    storage: IncomingLetterStorage,
-  });
   
-  const uploadOutgoingLetter = multer({
-    storage: OutgoingLetterStorage,
-  });
 
   module.exports = {
     uploadImage,
