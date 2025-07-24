@@ -9,12 +9,31 @@ const bodyParser = require("body-parser");
 const routes = require("./routes/index");
 const db = require('./models/index.js');
 
+console.log('FRONTEND_URL from process.env:', process.env.FRONTEND_URL);
+console.log('--- END RAILWAY ENV DEBUGGING ---');
+
+
 app.use(express.json());
 app.use(morgan("dev"));
 // app.use(cors());
+// app.use(cors({
+//        origin: process.env.FRONTEND_URL,
+//        credentials: true,
+// }));
 app.use(cors({
-       origin: process.env.FRONTEND_URL,
-       credentials: true,
+    origin: function (origin, callback) {
+        const allowedOrigin = process.env.FRONTEND_URL; // Ambil nilai yang diharapkan
+        console.log(`CORS Check: Request Origin is: '${origin}'`);
+        console.log(`CORS Check: Allowed Origin from ENV is: '${allowedOrigin}'`);
+
+        if (!origin || origin === allowedOrigin) {
+            callback(null, true);
+        } else {
+            console.error(`CORS BLOCKED: Mismatch! Request: '${origin}', Expected: '${allowedOrigin}'`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
 }));
 
 
